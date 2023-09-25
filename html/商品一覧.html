@@ -136,9 +136,84 @@
           </ul>
           <!-- // ソート -->
         </div><!-- /.p-item-list-head -->
+
+          <!-- コンテンツ読み込みに成功したときは、display:none を外す処理 -->
+          <script>
+            window.addEventListener('spearlyCmsAfterInit', (evt) => {
+              // 取得成功したものについては、display: none を外す
+              const contentId = evt.cmsContentId;
+              const className = `.c-item-list__item-from-spearly-${contentId}`;
+              const targetElement = document.querySelector(className);
+              targetElement.classList.remove(className);
+            })
+        </script>
+
         <!-- 商品リスト -->
         <ul class="c-item-list">
           <{section name=num loop=$productlist}>
+            <!-- Spearly / カラーミー両方とも最初は隠しておきます -->
+            <style>
+              /* コンテンツが読み込めなかった時に表示する要素に当てるクラス */
+              /* backup-* のようにワイルドカードでも問題ありません */
+              .backup-<{$productlist[num].id}> {
+                display: none;
+              }
+              /* コンテンツ読み込みまで表示崩れを防ぐために非表示にするクラス */
+              /* 上のscriptの処理で削除されるクラスです */
+              .c-item-list__item-from-spearly-<{$productlist[num].id}> {
+                display: none;
+              }
+            </style>
+            <!-- 商品個別 (Spearly から) -->
+            <li
+              class="c-item-list__item c-item-list__item-from-spearly-<{$productlist[num].id }>"
+              cms-item
+              cms-content-type="color-me-items"
+              cms-content="<{ $productlist[num].id }>"
+            >
+              <div class="c-item-list__img u-img-scale">
+                <a href="<{$productlist[num].link_url}>">
+                  <{if $productlist[num].img_url != ""}>
+                  <img src="<{$productlist[num].img_url}>" alt="<{$productlist[num].name|escape:'html'}>" />
+                  <{else}>
+                  <img src="https://img.shop-pro.jp/tmpl_img/86/no-image.jpg" alt="<{$productlist[num].name|escape:'html'}>" />
+                  <{/if}>
+                </a>
+              </div>
+              <div class="c-item-list__txt">
+                <div class="c-item-list__ttl">
+                  <a href="<{$productlist[num].link_url}>">
+                    {%= color-me-items_title %}
+                  </a>
+                </div>
+                <{if !$productlist[num].soldout_flg}>
+                <div class="c-item-list__price<{if $members_login_flg && $productlist[num].discount_flg}> is-discount<{/if}>">
+                  <{* 販売価格（ログイン時は会員価格） *}>
+                  <{$productlist[num].price}>
+                  <{* 割引率（ログイン時、通常販売価格と会員価格が異なる場合のみ） *}>
+                  <{if $members_login_flg && $productlist[num].discount_flg}><{$productlist[num].discount_rate}>OFF<{/if}>
+                </div>
+                <{* 通常販売価格（ログイン時、通常販売価格と会員価格が異なる場合のみ） *}>
+                <{if $members_login_flg && $productlist[num].discount_flg}>
+                <div class="c-item-list__price is-strikethrough">
+                  <{$productlist[num].regular_price}>
+                </div>
+                <{/if}>
+                <{else}>
+                <{* 売り切れの表記 *}>
+                <div class="c-item-list__price is-soldout">
+                  SOLD OUT
+                </div>
+                <{/if}>
+                <{* 簡易説明文 *}>
+                <{if $productlist[num].s_expl != ""}>
+                <div class="c-item-list__expl">
+                  {%= color-me-items_content %}
+                </div>
+                <{/if}>
+              </div>
+            </li>
+            <!-- コンテンツが取得できなかった場合に表示される要素-->
             <li class="c-item-list__item backup-<{$productlist[num].id}>">
             <div class="c-item-list__img u-img-scale">
               <a href="<{$productlist[num].link_url}>">
